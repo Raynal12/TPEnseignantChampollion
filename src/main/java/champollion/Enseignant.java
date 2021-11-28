@@ -1,11 +1,18 @@
 package champollion;
 
-public class Enseignant extends Personne {
+import java.util.ArrayList;
+import java.util.HashMap;
 
-    // TODO : rajouter les autres méthodes présentes dans le diagramme UML
+public class Enseignant extends Personne {
+    public HashMap<UE, ServicePrevu> myServicesPrevus;
+//public ArrayList<ServicePrevu> myServicesPrevus = new ArrayList<> ();
+// TODO : rajouter les autres méthodes présentes dans le diagramme UML
+        public ArrayList<Intervention> myInterventions;
 
     public Enseignant(String nom, String email) {
         super(nom, email);
+        this.myInterventions = new ArrayList <> ();
+        this.myServicesPrevus = new HashMap<UE, ServicePrevu> ();
     }
 
     /**
@@ -18,7 +25,11 @@ public class Enseignant extends Personne {
      */
     public int heuresPrevues() {
         // TODO: Implémenter cette méthode
-        throw new UnsupportedOperationException("Pas encore implémenté");
+        int heuresPrev = 0;
+        for (UE ue : myServicesPrevus.keySet()) {
+            heuresPrev += heuresPrevuesPourUE(ue);
+        }
+        return heuresPrev;
     }
 
     /**
@@ -32,7 +43,10 @@ public class Enseignant extends Personne {
      */
     public int heuresPrevuesPourUE(UE ue) {
         // TODO: Implémenter cette méthode
-        throw new UnsupportedOperationException("Pas encore implémenté");
+        double p = 0;
+        p = (myServicesPrevus.get(ue).getVolumeCM() * 1.5) + (myServicesPrevus.get(ue).getVolumeTP() * 0.75) + myServicesPrevus.get(ue).getVolumeTD();
+        int heuresPrevuesPrUE = (int) p;
+        return heuresPrevuesPrUE;
     }
 
     /**
@@ -45,7 +59,55 @@ public class Enseignant extends Personne {
      */
     public void ajouteEnseignement(UE ue, int volumeCM, int volumeTD, int volumeTP) {
         // TODO: Implémenter cette méthode
-        throw new UnsupportedOperationException("Pas encore implémenté");
+            //ServicePrevu servicePrevu = new ServicePrevu(ue, volumeCM, volumeTD, volumeTP);
+            //myServicesPrevus.add(volumeCM, volumeTD, volumeTP);
+            if (!myServicesPrevus.containsKey(ue)) {
+                ServicePrevu s = new ServicePrevu(volumeCM, volumeTD, volumeTP);
+                myServicesPrevus.put(ue, s);
+            }
+            else {
+                
+                myServicesPrevus.get(ue).ajouterCM(volumeCM);
+                myServicesPrevus.get(ue).ajouterTD(volumeTD);
+                myServicesPrevus.get(ue).ajouterTP(volumeTP);
+            }
     }
 
+    //En sous service : le servic normal est de 192 heures, on cherche à si on a pas atteint cette horaire.
+    public boolean enSousService() {
+        boolean b = true;
+        if (heuresPrevues() == 192) {
+            b = false;
+        }
+        return b;
+    }
+    
+    public void ajouterIntervention(Intervention intervention) {
+        myInterventions.add(intervention);
+    }
+    
+    public int resteAPlanifier(UE ue, TypeIntervention type) {
+        int reste = 0;
+        int heureIntervention = 0;
+        for (Intervention i : myInterventions) {
+            if (i.getUe().equals(ue)) {
+                if (i.getTypeIntervention() == type) {
+                    heureIntervention += i.getDuree();
+                }
+            }
+        }
+        int heurePrevuUE = 0;
+        if (type == TypeIntervention.CM) {
+            heurePrevuUE += myServicesPrevus.get(ue).getVolumeCM();
+        }
+        if (type == TypeIntervention.TD) {
+            heurePrevuUE += myServicesPrevus.get(ue).getVolumeTD();
+        }
+        if (type == TypeIntervention.TP) {
+            heurePrevuUE += myServicesPrevus.get(ue).getVolumeTP();
+        }
+        
+        reste = heurePrevuUE - heureIntervention;
+        return reste;
+    }
 }
